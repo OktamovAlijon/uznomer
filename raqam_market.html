@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RAQAM MARKET — telefon raqamlarini ko'rish va sotib olish uchun oddiy katalog.">
+  <title>RAQAM MARKET</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --ink: #172033;
+      --muted: #687386;
+      --brand: #087f5b;
+      --brand-dark: #066548;
+      --line: #e5eaf1;
+      --shadow: 0 12px 30px rgba(20, 35, 60, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header {
+      padding: 34px 18px 38px;
+      color: white;
+      text-align: center;
+      background: linear-gradient(135deg, #10213d, #174d54);
+    }
+    header h1 { margin: 0; font-size: clamp(27px, 5vw, 40px); letter-spacing: 1px; }
+    header h1 span { color: #63e6be; }
+    header p { margin: 10px 0 0; color: #d4e4e8; }
+    .container { width: min(1050px, 100% - 32px); margin: 30px auto 55px; }
+    .topline {
+      display: flex; align-items: end; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    h2 { margin: 0; font-size: 24px; }
+    .count { color: var(--muted); font-size: 14px; }
+    .search-wrap { margin-bottom: 22px; }
+    .search-wrap input {
+      width: 100%; padding: 15px 17px; border: 1px solid var(--line);
+      border-radius: 12px; background: white; font-size: 16px; outline: none;
+    }
+    .search-wrap input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px #087f5b18; }
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+      gap: 17px;
+    }
+    .card {
+      padding: 21px; border: 1px solid var(--line); border-radius: 16px;
+      background: var(--surface); box-shadow: var(--shadow);
+    }
+    .tag {
+      display: inline-block; padding: 5px 9px; border-radius: 20px;
+      color: var(--brand-dark); background: #e3f8ef; font-size: 12px;
+      font-weight: 700;
+    }
+    .number { margin: 17px 0 9px; font-size: 22px; font-weight: 800; letter-spacing: .3px; }
+    .price { margin: 0 0 17px; color: var(--brand); font-size: 20px; font-weight: 800; }
+    .buy {
+      display: block; width: 100%; padding: 12px; border: 0; border-radius: 10px;
+      color: white; background: var(--brand); font-size: 15px; font-weight: 700;
+      text-align: center; text-decoration: none; cursor: pointer;
+    }
+    .buy:hover { background: var(--brand-dark); }
+    .empty {
+      grid-column: 1 / -1; padding: 35px 18px; border-radius: 14px;
+      color: var(--muted); background: white; text-align: center;
+    }
+    footer { padding: 22px 15px; color: var(--muted); text-align: center; font-size: 13px; }
+    @media (max-width: 480px) {
+      .container { width: min(100% - 24px, 1050px); margin-top: 22px; }
+      .number { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RAQAM <span>MARKET</span></h1>
+    <p>O'zingizga yoqqan telefon raqamini tanlang</p>
+  </header>
+
+  <main class="container">
+    <div class="topline">
+      <h2>📱 Raqamlar katalogi</h2>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Raqam yoki narx bo'yicha qidiring..." aria-label="Raqam qidirish">
+    </div>
+
+    <section class="cards" id="cards" aria-live="polite"></section>
+  </main>
+
+  <footer>© 2026 RAQAM MARKET</footer>
+
+  <script>
+    // Namuna raqamlar. O'zingizning raqamlaringiz va narxlaringiz bilan almashtiring.
+    const numbers = [
+      { phone: "+998 90 123 45 67", price: 150000, type: "Chiroyli raqam" },
+      { phone: "+998 91 777 77 77", price: 950000, type: "VIP raqam" },
+      { phone: "+998 93 222 22 22", price: 700000, type: "VIP raqam" },
+      { phone: "+998 94 555 12 12", price: 280000, type: "Oltin raqam" },
+      { phone: "+998 95 101 01 01", price: 190000, type: "Chiroyli raqam" },
+      { phone: "+998 97 888 88 88", price: 1200000, type: "VIP raqam" }
+    ];
+
+    // Sotuvchining Telegram username'ini shu yerga yozing, masalan: "raqam_sotuvchi".
+    const telegramUsername = "";
+
+    const cards = document.getElementById("cards");
+    const search = document.getElementById("search");
+    const count = document.getElementById("count");
+
+    function formatPrice(value) {
+      return new Intl.NumberFormat("uz-UZ").format(value) + " so'm";
+    }
+
+    function render() {
+      const query = search.value.trim().toLowerCase();
+      const filtered = numbers.filter(item =>
+        item.phone.toLowerCase().includes(query) ||
+        item.type.toLowerCase().includes(query) ||
+        String(item.price).includes(query)
+      );
+
+      count.textContent = filtered.length + " ta raqam";
+      cards.innerHTML = "";
+
+      if (filtered.length === 0) {
+        cards.innerHTML = '<div class="empty">Qidiruv bo‘yicha raqam topilmadi.</div>';
+        return;
+      }
+
+      filtered.forEach(item => {
+        const message = encodeURIComponent("Salom! " + item.phone + " raqamiga qiziqyapman.");
+        const contactUrl = telegramUsername
+          ? "https://t.me/" + telegramUsername + "?text=" + message
+          : "https://t.me/";
+
+        const article = document.createElement("article");
+        article.className = "card";
+
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = item.type;
+
+        const phone = document.createElement("div");
+        phone.className = "number";
+        phone.textContent = item.phone;
+
+        const price = document.createElement("p");
+        price.className = "price";
+        price.textContent = formatPrice(item.price);
+
+        const link = document.createElement("a");
+        link.className = "buy";
+        link.href = contactUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Sotib olish";
+
+        article.append(tag, phone, price, link);
+        cards.appendChild(article);
+      });
+    }
+
+    search.addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>
